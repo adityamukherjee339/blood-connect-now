@@ -32,6 +32,14 @@ const Index = () => {
             Donate Blood
           </Button>
           <Button
+            variant="hero"
+            size="xl"
+            className="w-full"
+            onClick={() => navigate("/book-test")}
+          >
+            Book Blood Test
+          </Button>
+          <Button
             variant="hero-outline"
             size="xl"
             className="w-full"
