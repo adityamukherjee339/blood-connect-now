@@ -1,9 +1,11 @@
+"use client";
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, ArrowRight, Upload, CheckCircle } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,7 +34,7 @@ type DonorFormData = z.infer<typeof donorSchema>;
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 
 const DonorRegistration = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [file, setFile] = useState<File | null>(null);
   const [submitted, setSubmitted] = useState(false);
@@ -71,7 +73,7 @@ const DonorRegistration = () => {
             <CheckCircle className="h-16 w-16 text-primary" />
             <h2 className="font-serif text-2xl font-bold text-foreground">Thank You!</h2>
             <p className="text-muted-foreground">Your donor registration has been submitted.</p>
-            <Button variant="hero" onClick={() => navigate("/")}>Back to Home</Button>
+            <Button variant="hero" onClick={() => router.push("/")}>Back to Home</Button>
           </CardContent>
         </Card>
       </div>
@@ -83,7 +85,7 @@ const DonorRegistration = () => {
       <Card className="w-full max-w-lg">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => step > 1 ? setStep(step - 1) : navigate("/")}>
+            <Button variant="ghost" size="icon" onClick={() => step > 1 ? setStep(step - 1) : router.push("/")}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <CardTitle className="font-serif text-xl">Donor Registration — Step {step} of 3</CardTitle>

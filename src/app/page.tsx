@@ -1,9 +1,11 @@
+"use client";
+
 import { Droplet } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4">
@@ -27,7 +29,7 @@ const Index = () => {
             variant="hero"
             size="xl"
             className="w-full"
-            onClick={() => navigate("/donate")}
+            onClick={() => router.push("/donate")}
           >
             Donate Blood
           </Button>
@@ -35,7 +37,7 @@ const Index = () => {
             variant="hero"
             size="xl"
             className="w-full"
-            onClick={() => navigate("/book-test")}
+            onClick={() => router.push("/book-test")}
           >
             Book Blood Test
           </Button>
@@ -43,7 +45,7 @@ const Index = () => {
             variant="hero-outline"
             size="xl"
             className="w-full"
-            onClick={() => navigate("/emergency")}
+            onClick={() => router.push("/emergency")}
           >
             Need Blood (Emergency)
           </Button>
@@ -62,7 +64,7 @@ const Index = () => {
         </div>
 
         {/* Link */}
-        <Button variant="link" className="text-muted-foreground underline" onClick={() => navigate("/records")}>
+        <Button variant="link" className="text-muted-foreground underline" onClick={() => router.push("/records")}>
           View all records
         </Button>
       </div>

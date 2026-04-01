@@ -1,6 +1,8 @@
+"use client";
+
 import { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, MapPin, Phone, Siren, Droplet, AlertTriangle } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -35,7 +37,7 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 }
 
 const EmergencyDashboard = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [mode, setMode] = useState<"blood" | "accident">("blood");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [selectedBlood, setSelectedBlood] = useState("");
@@ -74,7 +76,7 @@ const EmergencyDashboard = () => {
       <div className="mx-auto max-w-lg">
         {/* Header */}
         <div className="mb-6 flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
+          <Button variant="ghost" size="icon" onClick={() => router.push("/")}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="font-serif text-2xl font-bold text-foreground">Emergency Dashboard</h1>

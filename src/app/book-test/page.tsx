@@ -1,9 +1,11 @@
+"use client";
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, CheckCircle, TestTube } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,7 +29,7 @@ const bookTestSchema = z.object({
 type BookTestFormData = z.infer<typeof bookTestSchema>;
 
 const BookBloodTest = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [submitted, setSubmitted] = useState(false);
 
   const {
@@ -59,7 +61,7 @@ const BookBloodTest = () => {
               Your blood test has been booked. We will contact you shortly to
               confirm the schedule.
             </p>
-            <Button variant="hero" onClick={() => navigate("/")}>
+            <Button variant="hero" onClick={() => router.push("/")}>
               Back to Home
             </Button>
           </CardContent>
@@ -77,7 +79,7 @@ const BookBloodTest = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate("/")}
+              onClick={() => router.push("/")}
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
