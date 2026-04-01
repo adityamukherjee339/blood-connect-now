@@ -72,45 +72,47 @@ const EmergencyDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen px-4 py-8">
+    <div className="min-h-screen px-3 py-5 sm:px-4 sm:py-8">
       <div className="mx-auto max-w-lg">
         {/* Header */}
-        <div className="mb-6 flex items-center gap-3">
+        <div className="mb-4 flex items-center gap-2 sm:mb-6 sm:gap-3">
           <Button variant="ghost" size="icon" onClick={() => router.push("/")}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="font-serif text-2xl font-bold text-foreground">Emergency Dashboard</h1>
+          <h1 className="font-serif text-xl font-bold text-foreground sm:text-2xl">Emergency Dashboard</h1>
         </div>
 
         {/* Location Status */}
-        <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
-          <MapPin className="h-4 w-4 text-primary" />
-          {coords ? `Location: ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}` : "Getting location..."}
+        <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground sm:mb-4 sm:text-sm">
+          <MapPin className="h-4 w-4 shrink-0 text-primary" />
+          <span className="truncate">
+            {coords ? `Location: ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}` : "Getting location..."}
+          </span>
         </div>
 
         {/* Mode Toggle */}
-        <div className="mb-6 flex gap-2">
+        <div className="mb-5 flex gap-2 sm:mb-6">
           <Button
             variant={mode === "blood" ? "hero" : "hero-outline"}
-            size="lg"
-            className="flex-1"
+            size="default"
+            className="flex-1 text-xs sm:text-base"
             onClick={() => { setMode("blood"); setAmbulanceRequested(false); }}
           >
-            <Droplet className="mr-1 h-4 w-4" /> Request Blood
+            <Droplet className="mr-1 h-4 w-4 shrink-0" /> Request Blood
           </Button>
           <Button
             variant={mode === "accident" ? "hero" : "hero-outline"}
-            size="lg"
-            className="flex-1"
+            size="default"
+            className="flex-1 text-xs sm:text-base"
             onClick={() => { setMode("accident"); setSelectedBlood(""); }}
           >
-            <AlertTriangle className="mr-1 h-4 w-4" /> Report Accident
+            <AlertTriangle className="mr-1 h-4 w-4 shrink-0" /> Report Accident
           </Button>
         </div>
 
         {/* Blood Request Mode */}
         {mode === "blood" && (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3 sm:gap-4">
             <Select onValueChange={setSelectedBlood}>
               <SelectTrigger>
                 <SelectValue placeholder="Select needed blood type" />
@@ -127,17 +129,18 @@ const EmergencyDashboard = () => {
                 <p className="text-sm font-medium text-muted-foreground">Nearest hospitals with {selectedBlood}:</p>
                 {getNearestHospitals().map((h) => (
                   <Card key={h.id}>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base">{h.name}</CardTitle>
+                    <CardHeader className="px-4 pb-1 pt-3 sm:px-6 sm:pb-2 sm:pt-4">
+                      <CardTitle className="text-sm sm:text-base">{h.name}</CardTitle>
                     </CardHeader>
-                    <CardContent className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">{h.address}</p>
-                        <p className="text-xs text-primary font-medium">{h.distance.toFixed(1)} km away</p>
+                    <CardContent className="flex flex-col gap-2 px-4 pb-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:pb-4">
+                      <div className="min-w-0">
+                        <p className="truncate text-xs text-muted-foreground sm:text-sm">{h.address}</p>
+                        <p className="text-xs font-medium text-primary">{h.distance.toFixed(1)} km away</p>
                       </div>
                       <Button
                         variant="hero"
                         size="sm"
+                        className="w-full shrink-0 sm:w-auto"
                         onClick={() => window.open(`tel:${h.phone}`)}
                       >
                         <Phone className="mr-1 h-3 w-3" /> Call
@@ -155,33 +158,33 @@ const EmergencyDashboard = () => {
 
         {/* Accident Mode */}
         {mode === "accident" && (
-          <div className="flex flex-col items-center gap-6 pt-8">
+          <div className="flex flex-col items-center gap-4 pt-5 sm:gap-6 sm:pt-8">
             {!ambulanceRequested ? (
               <>
-                <Siren className="h-20 w-20 text-primary animate-pulse-glow" />
+                <Siren className="h-14 w-14 text-primary animate-pulse-glow sm:h-20 sm:w-20" />
                 <Button
                   variant="emergency"
                   size="xl"
-                  className="w-full py-8 text-xl"
+                  className="w-full py-5 text-base sm:py-8 sm:text-xl"
                   onClick={handleAmbulance}
                 >
                   🚑 Request Ambulance Fast
                 </Button>
                 {coords && (
-                  <p className="text-xs text-muted-foreground text-center">
+                  <p className="text-[11px] text-muted-foreground text-center sm:text-xs">
                     Your coordinates ({coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}) will be shared with emergency services.
                   </p>
                 )}
               </>
             ) : (
               <Card className="w-full text-center">
-                <CardContent className="flex flex-col items-center gap-4 pt-8 pb-8">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                    <Siren className="h-8 w-8 text-primary" />
+                <CardContent className="flex flex-col items-center gap-3 px-4 pt-6 pb-6 sm:gap-4 sm:px-6 sm:pt-8 sm:pb-8">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 sm:h-16 sm:w-16">
+                    <Siren className="h-7 w-7 text-primary sm:h-8 sm:w-8" />
                   </div>
-                  <h2 className="font-serif text-xl font-bold text-foreground">Request Sent!</h2>
-                  <p className="text-muted-foreground">Emergency services have been notified. Help is on the way.</p>
-                  <p className="text-xs text-muted-foreground">
+                  <h2 className="font-serif text-lg font-bold text-foreground sm:text-xl">Request Sent!</h2>
+                  <p className="text-sm text-muted-foreground sm:text-base">Emergency services have been notified. Help is on the way.</p>
+                  <p className="text-[11px] text-muted-foreground sm:text-xs">
                     Location: {coords?.lat.toFixed(4)}, {coords?.lng.toFixed(4)}
                   </p>
                 </CardContent>
