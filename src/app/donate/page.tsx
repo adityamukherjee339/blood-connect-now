@@ -29,6 +29,7 @@ const donorSchema = z.object({
   medicalConditions: z.string().max(500).optional(),
   address: z.string().min(5, "Address is required").max(300),
   contact: z.string().min(10, "Enter a valid contact number").max(15),
+  aadhaar: z.string().regex(/^\d{12}$/, "Aadhaar must be exactly 12 digits"),
 });
 
 type DonorFormData = z.infer<typeof donorSchema>;
@@ -55,7 +56,7 @@ const DonorRegistration = () => {
   const nextStep = async () => {
     const fieldsPerStep: Record<number, (keyof DonorFormData)[]> = {
       1: ["name", "age", "bloodGroup"],
-      2: ["medicalConditions", "address", "contact"],
+      2: ["medicalConditions", "address", "contact", "aadhaar"],
     };
     const valid = await trigger(fieldsPerStep[step]);
     if (valid) setStep(step + 1);
@@ -70,6 +71,7 @@ const DonorRegistration = () => {
       medical_conditions: data.medicalConditions,
       address: data.address,
       contact: data.contact,
+      aadhaar: data.aadhaar,
     }]);
 
     if (error) {
@@ -163,6 +165,11 @@ const DonorRegistration = () => {
                   <Label htmlFor="contact">{t("contactNumber")}</Label>
                   <Input id="contact" placeholder="+91 95786 XXXXX" {...register("contact")} />
                   {errors.contact && <p className="mt-1 text-sm text-primary">{errors.contact.message}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="aadhaar">{t("aadhaarNumber")}</Label>
+                  <Input id="aadhaar" placeholder={t("aadhaarPlaceholder")} maxLength={12} {...register("aadhaar")} />
+                  {errors.aadhaar && <p className="mt-1 text-sm text-primary">{errors.aadhaar.message}</p>}
                 </div>
                 <Button type="button" variant="hero" className="mt-2 w-full" onClick={nextStep}>
                   {t("next")} <ArrowRight className="ml-1 h-4 w-4" />

@@ -3,6 +3,41 @@ export type Locale = "en" | "hi";
 export const translations = {
   // ── Navbar ──
   language: { en: "English", hi: "हिन्दी" },
+  loginSignUp: { en: "Login / Sign Up", hi: "लॉगिन / साइन अप" },
+  hospital: { en: "Hospital", hi: "अस्पताल" },
+  bloodBank: { en: "Blood Bank", hi: "ब्लड बैंक" },
+  user: { en: "User", hi: "उपयोगकर्ता" },
+
+  // ── Hospital Dashboard ──
+  hospitalDashboard: { en: "Hospital Dashboard", hi: "अस्पताल डैशबोर्ड" },
+  partnerHospitals: { en: "Partner Hospitals", hi: "सहयोगी अस्पताल" },
+  incomingRequests: { en: "Incoming Requests", hi: "आने वाले अनुरोध" },
+  requestExchange: { en: "Request Exchange", hi: "विनिमय अनुरोध करें" },
+  bloodNeeded: { en: "Blood Group Needed", hi: "आवश्यक रक्त समूह" },
+  bloodOffered: { en: "Blood Group Offered", hi: "दिया जाने वाला रक्त समूह" },
+  messageOptional: { en: "Message (optional)", hi: "संदेश (वैकल्पिक)" },
+  sendRequest: { en: "Send Request", hi: "अनुरोध भेजें" },
+  accept: { en: "Accept", hi: "स्वीकार करें" },
+  reject: { en: "Reject", hi: "अस्वीकार करें" },
+  pending: { en: "Pending", hi: "प्रतीक्षारत" },
+  accepted: { en: "Accepted", hi: "स्वीकृत" },
+  rejected: { en: "Rejected", hi: "अस्वीकृत" },
+  needs: { en: "Needs", hi: "आवश्यकता" },
+  offers: { en: "Offers", hi: "प्रस्ताव" },
+  from: { en: "From", hi: "से" },
+  noPartnerHospitals: { en: "No other hospitals registered yet.", hi: "अभी तक कोई अन्य अस्पताल पंजीकृत नहीं है।" },
+  noIncomingRequests: { en: "No incoming requests yet.", hi: "अभी तक कोई अनुरोध नहीं आया।" },
+  requestSentSuccess: { en: "Exchange request sent!", hi: "विनिमय अनुरोध भेज दिया गया!" },
+  logout: { en: "Logout", hi: "लॉगआउट" },
+  welcomeHospital: { en: "Welcome,", hi: "स्वागत है," },
+  emergencyAlerts: { en: "Emergency Alerts", hi: "आपातकालीन अलर्ट" },
+  acceptAndDispatch: { en: "Accept & Dispatch", hi: "स्वीकार करें और भेजें" },
+  dispatchedByUs: { en: "Dispatched by You", hi: "आपके द्वारा भेजा गया" },
+  dispatchedByOther: { en: "Dispatched by", hi: "द्वारा भेजा गया" },
+  noEmergencies: { en: "No emergency alerts right now.", hi: "अभी कोई आपातकालीन अलर्ट नहीं है।" },
+  accidentReportedBy: { en: "Reported by", hi: "रिपोर्ट किया गया" },
+  location: { en: "Location", hi: "स्थान" },
+  dispatched: { en: "Dispatched", hi: "भेजा गया" },
 
   // ── Home Page ──
   homeTagline: {
@@ -119,6 +154,8 @@ export const translations = {
     hi: "मकान नं, गली, शहर, राज्य, पिन कोड",
   },
   contactNumber: { en: "Contact Number", hi: "संपर्क नंबर" },
+  aadhaarNumber: { en: "Aadhaar Card Number", hi: "आधार कार्ड नंबर" },
+  aadhaarPlaceholder: { en: "XXXX XXXX XXXX", hi: "XXXX XXXX XXXX" },
   uploadBloodReport: {
     en: "Upload Blood Report (PDF)",
     hi: "रक्त रिपोर्ट अपलोड करें (PDF)",
