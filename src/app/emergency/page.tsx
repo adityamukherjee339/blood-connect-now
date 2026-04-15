@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, MapPin, Phone, Siren, Droplet, AlertTriangle } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Siren, Droplet, AlertTriangle, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useLanguage } from "@/lib/LanguageContext";
+import { supabase } from "@/lib/supabaseClient";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 
@@ -38,23 +40,28 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 const EmergencyDashboard = () => {
   const router = useRouter();
+  const { t } = useLanguage();
   const [mode, setMode] = useState<"blood" | "accident">("blood");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [selectedBlood, setSelectedBlood] = useState("");
   const [ambulanceRequested, setAmbulanceRequested] = useState(false);
+  const [bloodRequested, setBloodRequested] = useState(false);
+  const [userName, setUserName] = useState("");
+  const [userPhone, setUserPhone] = useState("");
 
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
         () => {
-          toast.error("Location access denied. Using default location.");
+          toast.error(t("locationDenied"));
           setCoords({ lat: 28.6139, lng: 77.209 });
         }
       );
     } else {
       setCoords({ lat: 28.6139, lng: 77.209 });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getNearestHospitals = useCallback(() => {
@@ -66,9 +73,57 @@ const EmergencyDashboard = () => {
       .slice(0, 3);
   }, [coords, selectedBlood]);
 
-  const handleAmbulance = () => {
+  const handleAmbulance = async () => {
+    if (!userName.trim() || !userPhone.trim()) {
+      toast.error(t("enterNamePhoneFirst"));
+      return;
+    }
+
+    const { error } = await supabase.from("blood_requests").insert([{
+      request_type: "ambulance",
+      name: userName,
+      phone: userPhone,
+      lat: coords?.lat,
+      lng: coords?.lng,
+    }]);
+
+    if (error) {
+      console.error("Supabase insert error:", error);
+      toast.error("Failed to send ambulance request. Please try again or call emergency services directly.");
+      return;
+    }
+
     setAmbulanceRequested(true);
-    toast.success("Ambulance request sent! Help is on the way.");
+    toast.success(t("ambulanceRequestSent"));
+  };
+
+  const handleBloodRequest = async () => {
+    if (!userName.trim() || !userPhone.trim()) {
+      toast.error(t("enterNamePhoneFirst"));
+      return;
+    }
+    if (!selectedBlood) {
+      toast.error(t("selectBloodTypeFirst"));
+      return;
+    }
+
+    const { error } = await supabase.from("blood_requests").insert([{
+      request_type: "blood",
+      name: userName,
+      phone: userPhone,
+      blood_group: selectedBlood,
+      lat: coords?.lat,
+      lng: coords?.lng,
+    }]);
+
+    if (error) {
+      console.error("Supabase insert error:", error);
+      toast.error("Failed to send blood request. Please try again.");
+      return;
+    }
+
+    setBloodRequested(true);
+    toast.success(t("bloodRequestToast", { blood: selectedBlood }));
   };
 
   return (
@@ -79,15 +134,39 @@ const EmergencyDashboard = () => {
           <Button variant="ghost" size="icon" onClick={() => router.push("/")}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="font-serif text-xl font-bold text-foreground sm:text-2xl">Emergency Dashboard</h1>
+          <h1 className="font-serif text-xl font-bold text-foreground sm:text-2xl">{t("emergencyDashboard")}</h1>
         </div>
 
         {/* Location Status */}
         <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground sm:mb-4 sm:text-sm">
           <MapPin className="h-4 w-4 shrink-0 text-primary" />
           <span className="truncate">
-            {coords ? `Location: ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}` : "Getting location..."}
+            {coords ? `${t("locationPrefix")}: ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}` : t("gettingLocation")}
           </span>
+        </div>
+
+        {/* User Info Inputs */}
+        <div className="mb-5 flex flex-col gap-3 sm:mb-6">
+          <div className="relative">
+            <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder={t("enterYourName")}
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              className="w-full rounded-md border border-input bg-background py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition"
+            />
+          </div>
+          <div className="relative">
+            <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="tel"
+              placeholder={t("enterYourPhone")}
+              value={userPhone}
+              onChange={(e) => setUserPhone(e.target.value)}
+              className="w-full rounded-md border border-input bg-background py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition"
+            />
+          </div>
         </div>
 
         {/* Mode Toggle */}
@@ -96,62 +175,107 @@ const EmergencyDashboard = () => {
             variant={mode === "blood" ? "hero" : "hero-outline"}
             size="default"
             className="flex-1 text-xs sm:text-base"
-            onClick={() => { setMode("blood"); setAmbulanceRequested(false); }}
+            onClick={() => { setMode("blood"); setAmbulanceRequested(false); setBloodRequested(false); }}
           >
-            <Droplet className="mr-1 h-4 w-4 shrink-0" /> Request Blood
+            <Droplet className="mr-1 h-4 w-4 shrink-0" /> {t("requestBlood")}
           </Button>
           <Button
             variant={mode === "accident" ? "hero" : "hero-outline"}
             size="default"
             className="flex-1 text-xs sm:text-base"
-            onClick={() => { setMode("accident"); setSelectedBlood(""); }}
+            onClick={() => { setMode("accident"); setSelectedBlood(""); setBloodRequested(false); }}
           >
-            <AlertTriangle className="mr-1 h-4 w-4 shrink-0" /> Report Accident
+            <AlertTriangle className="mr-1 h-4 w-4 shrink-0" /> {t("reportAccident")}
           </Button>
         </div>
 
         {/* Blood Request Mode */}
         {mode === "blood" && (
           <div className="flex flex-col gap-3 sm:gap-4">
-            <Select onValueChange={setSelectedBlood}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select needed blood type" />
-              </SelectTrigger>
-              <SelectContent>
-                {BLOOD_GROUPS.map((bg) => (
-                  <SelectItem key={bg} value={bg}>{bg}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {!bloodRequested ? (
+              <>
+                <Select onValueChange={setSelectedBlood}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("selectBloodType")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BLOOD_GROUPS.map((bg) => (
+                      <SelectItem key={bg} value={bg}>{bg}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-            {selectedBlood && (
-              <div className="flex flex-col gap-3">
-                <p className="text-sm font-medium text-muted-foreground">Nearest hospitals with {selectedBlood}:</p>
-                {getNearestHospitals().map((h) => (
-                  <Card key={h.id}>
-                    <CardHeader className="px-4 pb-1 pt-3 sm:px-6 sm:pb-2 sm:pt-4">
-                      <CardTitle className="text-sm sm:text-base">{h.name}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex flex-col gap-2 px-4 pb-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:pb-4">
-                      <div className="min-w-0">
-                        <p className="truncate text-xs text-muted-foreground sm:text-sm">{h.address}</p>
-                        <p className="text-xs font-medium text-primary">{h.distance.toFixed(1)} km away</p>
-                      </div>
-                      <Button
-                        variant="hero"
-                        size="sm"
-                        className="w-full shrink-0 sm:w-auto"
-                        onClick={() => window.open(`tel:${h.phone}`)}
+                {selectedBlood && (
+                  <div className="flex flex-col gap-3">
+                    <p className="text-sm font-medium text-muted-foreground">{t("nearestHospitalsWith")} {selectedBlood}:</p>
+                    {getNearestHospitals().map((h) => (
+                      <Card key={h.id}>
+                        <CardHeader className="px-4 pb-1 pt-3 sm:px-6 sm:pb-2 sm:pt-4">
+                          <CardTitle className="text-sm sm:text-base">{h.name}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex flex-col gap-2 px-4 pb-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:pb-4">
+                          <div className="min-w-0">
+                            <p className="truncate text-xs text-muted-foreground sm:text-sm">{h.address}</p>
+                            <p className="text-xs font-medium text-primary">{h.distance.toFixed(1)} {t("kmAway")}</p>
+                          </div>
+                          <Button
+                            variant="hero"
+                            size="sm"
+                            className="w-full shrink-0 sm:w-auto"
+                            onClick={() => window.open(`tel:${h.phone}`)}
+                          >
+                            <Phone className="mr-1 h-3 w-3" /> {t("call")}
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    {getNearestHospitals().length === 0 && (
+                      <p className="text-center text-sm text-muted-foreground">{t("noHospitalsFound")}</p>
+                    )}
+                    
+                    <div className="mt-4 pt-4 border-t border-border/50">
+                      <Button 
+                        variant="hero" 
+                        size="lg" 
+                        className="w-full py-6 text-base font-bold shadow-lg shadow-primary/20"
+                        onClick={handleBloodRequest}
                       >
-                        <Phone className="mr-1 h-3 w-3" /> Call
+                        <Droplet className="mr-2 h-5 w-5 fill-current" />
+                        {t("requestForBloodNow", { blood: selectedBlood })}
                       </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-                {getNearestHospitals().length === 0 && (
-                  <p className="text-center text-sm text-muted-foreground">No hospitals found with this blood type nearby.</p>
+                      <p className="mt-2 text-center text-[10px] text-muted-foreground sm:text-xs">
+                        {t("notifyDonorsMsg")}
+                      </p>
+                    </div>
+                  </div>
                 )}
-              </div>
+              </>
+            ) : (
+              <Card className="w-full text-center">
+                <CardContent className="flex flex-col items-center gap-3 px-4 pt-6 pb-6 sm:gap-4 sm:px-6 sm:pt-8 sm:pb-8">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 sm:h-16 sm:w-16">
+                    <Droplet className="h-7 w-7 text-primary sm:h-8 sm:w-8" />
+                  </div>
+                  <h2 className="font-serif text-lg font-bold text-foreground sm:text-xl">{t("bloodRequestSent")}</h2>
+                  <p className="text-sm text-muted-foreground sm:text-base">
+                    {t("bloodRequestSentMsg", { blood: selectedBlood })}
+                  </p>
+                  <div className="rounded-lg bg-muted p-3 w-full max-w-xs">
+                    <p className="text-xs font-semibold text-foreground">{userName}</p>
+                    <p className="text-xs text-muted-foreground">{userPhone}</p>
+                    <p className="mt-1 inline-flex items-center rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-bold text-primary uppercase">
+                      {t("bloodType")}: {selectedBlood}
+                    </p>
+                  </div>
+                  <Button 
+                    variant="link" 
+                    className="text-xs" 
+                    onClick={() => setBloodRequested(false)}
+                  >
+                    {t("sendAnotherRequest")}
+                  </Button>
+                </CardContent>
+              </Card>
             )}
           </div>
         )}
@@ -168,11 +292,11 @@ const EmergencyDashboard = () => {
                   className="w-full py-5 text-base sm:py-8 sm:text-xl"
                   onClick={handleAmbulance}
                 >
-                  🚑 Request Ambulance Fast
+                  {t("requestAmbulanceFast")}
                 </Button>
                 {coords && (
                   <p className="text-[11px] text-muted-foreground text-center sm:text-xs">
-                    Your coordinates ({coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}) will be shared with emergency services.
+                    {t("coordsSharedMsg", { lat: coords.lat.toFixed(4), lng: coords.lng.toFixed(4) })}
                   </p>
                 )}
               </>
@@ -182,10 +306,13 @@ const EmergencyDashboard = () => {
                   <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 sm:h-16 sm:w-16">
                     <Siren className="h-7 w-7 text-primary sm:h-8 sm:w-8" />
                   </div>
-                  <h2 className="font-serif text-lg font-bold text-foreground sm:text-xl">Request Sent!</h2>
-                  <p className="text-sm text-muted-foreground sm:text-base">Emergency services have been notified. Help is on the way.</p>
+                  <h2 className="font-serif text-lg font-bold text-foreground sm:text-xl">{t("requestSent")}</h2>
+                  <p className="text-sm text-muted-foreground sm:text-base">{t("ambulanceOnWay")}</p>
+                  {userName && (
+                    <p className="text-xs font-medium text-foreground">{userName} &mdash; {userPhone}</p>
+                  )}
                   <p className="text-[11px] text-muted-foreground sm:text-xs">
-                    Location: {coords?.lat.toFixed(4)}, {coords?.lng.toFixed(4)}
+                    {t("locationLabel")}: {coords?.lat.toFixed(4)}, {coords?.lng.toFixed(4)}
                   </p>
                 </CardContent>
               </Card>

@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { useLanguage } from "@/lib/LanguageContext";
 
 const bookTestSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(100),
@@ -30,6 +31,7 @@ type BookTestFormData = z.infer<typeof bookTestSchema>;
 
 const BookBloodTest = () => {
   const router = useRouter();
+  const { t } = useLanguage();
   const [submitted, setSubmitted] = useState(false);
 
   const {
@@ -44,7 +46,7 @@ const BookBloodTest = () => {
     console.log("Blood test booking:", data);
     // TODO: Submit to Supabase when connected
     setSubmitted(true);
-    toast.success("Blood test booked successfully!");
+    toast.success(t("bookingSuccessToast"));
   };
 
   /* ── Success Screen ── */
@@ -55,14 +57,13 @@ const BookBloodTest = () => {
           <CardContent className="flex flex-col items-center gap-4 pt-8 pb-8">
             <CheckCircle className="h-16 w-16 text-primary" />
             <h2 className="font-serif text-2xl font-bold text-foreground">
-              Booking Confirmed!
+              {t("bookingConfirmed")}
             </h2>
             <p className="text-muted-foreground">
-              Your blood test has been booked. We will contact you shortly to
-              confirm the schedule.
+              {t("bookingConfirmedMsg")}
             </p>
             <Button variant="hero" onClick={() => router.push("/")}>
-              Back to Home
+              {t("backToHome")}
             </Button>
           </CardContent>
         </Card>
@@ -86,7 +87,7 @@ const BookBloodTest = () => {
             <div className="flex items-center gap-2">
               <TestTube className="h-5 w-5 text-primary" />
               <CardTitle className="font-serif text-xl">
-                Book Blood Test
+                {t("bookBloodTestTitle")}
               </CardTitle>
             </div>
           </div>
@@ -99,10 +100,9 @@ const BookBloodTest = () => {
           >
             {/* Name */}
             <div>
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name">{t("fullName")}</Label>
               <Input
                 id="name"
-                placeholder="John Doe"
                 {...register("name")}
               />
               {errors.name && (
@@ -114,7 +114,7 @@ const BookBloodTest = () => {
 
             {/* Age */}
             <div>
-              <Label htmlFor="age">Age</Label>
+              <Label htmlFor="age">{t("age")}</Label>
               <Input
                 id="age"
                 type="number"
@@ -130,10 +130,10 @@ const BookBloodTest = () => {
 
             {/* Full Address */}
             <div>
-              <Label htmlFor="address">Full Address</Label>
+              <Label htmlFor="address">{t("fullAddress")}</Label>
               <Textarea
                 id="address"
-                placeholder="House No, Street, City, State, PIN Code"
+                placeholder={t("addressPlaceholder")}
                 rows={3}
                 {...register("address")}
               />
@@ -146,11 +146,11 @@ const BookBloodTest = () => {
 
             {/* Contact Number */}
             <div>
-              <Label htmlFor="contact">Contact Number</Label>
+              <Label htmlFor="contact">{t("contactNumber")}</Label>
               <Input
                 id="contact"
                 type="tel"
-                placeholder="+91 98765 43210"
+                placeholder="+91 98765 XXXXXX"
                 {...register("contact")}
               />
               {errors.contact && (
@@ -168,7 +168,7 @@ const BookBloodTest = () => {
               className="mt-2 w-full"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Submitting…" : "Submit Booking"}
+              {isSubmitting ? t("submitting") : t("submitBooking")}
             </Button>
           </form>
         </CardContent>

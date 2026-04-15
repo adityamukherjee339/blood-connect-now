@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { useLanguage } from "@/lib/LanguageContext";
+import { supabase } from "@/lib/supabaseClient";
 
 const donorSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(100),
@@ -35,6 +37,7 @@ const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 
 const DonorRegistration = () => {
   const router = useRouter();
+  const { t } = useLanguage();
   const [step, setStep] = useState(1);
   const [file, setFile] = useState<File | null>(null);
   const [submitted, setSubmitted] = useState(false);
@@ -58,11 +61,25 @@ const DonorRegistration = () => {
     if (valid) setStep(step + 1);
   };
 
-  const onSubmit = (data: DonorFormData) => {
-    console.log("Donor data:", data, "File:", file);
-    // TODO: Submit to Supabase when connected
+  const onSubmit = async (data: DonorFormData) => {
+    // We omit file upload step here for simplicity, focus on structured data
+    const { error } = await supabase.from("donors").insert([{
+      name: data.name,
+      age: data.age,
+      blood_group: data.bloodGroup,
+      medical_conditions: data.medicalConditions,
+      address: data.address,
+      contact: data.contact,
+    }]);
+
+    if (error) {
+      console.error("Supabase insert error:", error);
+      toast.error("Failed to submit registration. Please try again.");
+      return;
+    }
+
     setSubmitted(true);
-    toast.success("Registration submitted successfully!");
+    toast.success(t("registrationSuccess"));
   };
 
   if (submitted) {
@@ -71,9 +88,9 @@ const DonorRegistration = () => {
         <Card className="w-full max-w-md text-center">
           <CardContent className="flex flex-col items-center gap-4 pt-8 pb-8">
             <CheckCircle className="h-16 w-16 text-primary" />
-            <h2 className="font-serif text-2xl font-bold text-foreground">Thank You!</h2>
-            <p className="text-muted-foreground">Your donor registration has been submitted.</p>
-            <Button variant="hero" onClick={() => router.push("/")}>Back to Home</Button>
+            <h2 className="font-serif text-2xl font-bold text-foreground">{t("thankYou")}</h2>
+            <p className="text-muted-foreground">{t("donorRegSubmitted")}</p>
+            <Button variant="hero" onClick={() => router.push("/")}>{t("backToHome")}</Button>
           </CardContent>
         </Card>
       </div>
@@ -88,7 +105,9 @@ const DonorRegistration = () => {
             <Button variant="ghost" size="icon" onClick={() => step > 1 ? setStep(step - 1) : router.push("/")}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <CardTitle className="font-serif text-xl">Donor Registration — Step {step} of 3</CardTitle>
+            <CardTitle className="font-serif text-xl">
+              {t("donorRegistration")} — {t("stepOf", { step: String(step), total: "3" })}
+            </CardTitle>
           </div>
           {/* Progress bar */}
           <div className="mt-3 flex gap-2">
@@ -102,19 +121,19 @@ const DonorRegistration = () => {
             {step === 1 && (
               <>
                 <div>
-                  <Label htmlFor="name">Full Name</Label>
-                  <Input id="name" placeholder="John Doe" {...register("name")} />
+                  <Label htmlFor="name">{t("fullName")}</Label>
+                  <Input id="name" {...register("name")} />
                   {errors.name && <p className="mt-1 text-sm text-primary">{errors.name.message}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="age">Age</Label>
+                  <Label htmlFor="age">{t("age")}</Label>
                   <Input id="age" type="number" placeholder="25" {...register("age")} />
                   {errors.age && <p className="mt-1 text-sm text-primary">{errors.age.message}</p>}
                 </div>
                 <div>
-                  <Label>Blood Group</Label>
+                  <Label>{t("bloodGroup")}</Label>
                   <Select onValueChange={(v) => setValue("bloodGroup", v)}>
-                    <SelectTrigger><SelectValue placeholder="Select blood group" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t("selectBloodGroup")} /></SelectTrigger>
                     <SelectContent>
                       {BLOOD_GROUPS.map((bg) => (
                         <SelectItem key={bg} value={bg}>{bg}</SelectItem>
@@ -124,7 +143,7 @@ const DonorRegistration = () => {
                   {errors.bloodGroup && <p className="mt-1 text-sm text-primary">{errors.bloodGroup.message}</p>}
                 </div>
                 <Button type="button" variant="hero" className="mt-2 w-full" onClick={nextStep}>
-                  Next <ArrowRight className="ml-1 h-4 w-4" />
+                  {t("next")} <ArrowRight className="ml-1 h-4 w-4" />
                 </Button>
               </>
             )}
@@ -132,21 +151,21 @@ const DonorRegistration = () => {
             {step === 2 && (
               <>
                 <div>
-                  <Label htmlFor="medicalConditions">Medical Conditions (optional)</Label>
-                  <Textarea id="medicalConditions" placeholder="Any known conditions..." {...register("medicalConditions")} />
+                  <Label htmlFor="medicalConditions">{t("medicalConditions")}</Label>
+                  <Textarea id="medicalConditions" placeholder={t("anyKnownConditions")} {...register("medicalConditions")} />
                 </div>
                 <div>
-                  <Label htmlFor="address">Address</Label>
-                  <Input id="address" placeholder="123 Main St, City" {...register("address")} />
+                  <Label htmlFor="address">{t("address")}</Label>
+                  <Input id="address" placeholder={t("addressPlaceholder")} {...register("address")} />
                   {errors.address && <p className="mt-1 text-sm text-primary">{errors.address.message}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="contact">Contact Number</Label>
-                  <Input id="contact" placeholder="+1 234 567 8900" {...register("contact")} />
+                  <Label htmlFor="contact">{t("contactNumber")}</Label>
+                  <Input id="contact" placeholder="+91 95786 XXXXX" {...register("contact")} />
                   {errors.contact && <p className="mt-1 text-sm text-primary">{errors.contact.message}</p>}
                 </div>
                 <Button type="button" variant="hero" className="mt-2 w-full" onClick={nextStep}>
-                  Next <ArrowRight className="ml-1 h-4 w-4" />
+                  {t("next")} <ArrowRight className="ml-1 h-4 w-4" />
                 </Button>
               </>
             )}
@@ -154,14 +173,14 @@ const DonorRegistration = () => {
             {step === 3 && (
               <>
                 <div>
-                  <Label>Upload Blood Report (PDF)</Label>
+                  <Label>{t("uploadBloodReport")}</Label>
                   <div
                     className="mt-2 flex cursor-pointer flex-col items-center gap-3 rounded-xl border-2 border-dashed border-primary/30 bg-secondary p-8 transition-colors hover:border-primary/60"
                     onClick={() => document.getElementById("file-upload")?.click()}
                   >
                     <Upload className="h-10 w-10 text-primary/60" />
                     <p className="text-sm text-muted-foreground">
-                      {file ? file.name : "Click to upload your blood report PDF"}
+                      {file ? file.name : t("clickToUpload")}
                     </p>
                     <input
                       id="file-upload"
@@ -176,7 +195,7 @@ const DonorRegistration = () => {
                   </div>
                 </div>
                 <Button type="submit" variant="hero" className="mt-4 w-full">
-                  Submit Registration
+                  {t("submitRegistration")}
                 </Button>
               </>
             )}
