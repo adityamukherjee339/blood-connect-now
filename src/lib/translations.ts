@@ -38,6 +38,22 @@ export const translations = {
   accidentReportedBy: { en: "Reported by", hi: "रिपोर्ट किया गया" },
   location: { en: "Location", hi: "स्थान" },
   dispatched: { en: "Dispatched", hi: "भेजा गया" },
+  
+  // ── User Portal ──
+  aadhaarNumber: { en: "Aadhaar Card Number", hi: "आधार कार्ड नंबर" },
+  enterAadhaar: { en: "XXXX XXXX XXXX", hi: "XXXX XXXX XXXX" },
+  userDashboard: { en: "User Dashboard", hi: "उपयोगकर्ता डैशबोर्ड" },
+  totalDonations: { en: "Total Donations", hi: "कुल दान" },
+  rewardTokens: { en: "Reward Tokens", hi: "इनाम टोकन" },
+  donationHistory: { en: "Donation History", hi: "रक्तदान का इतिहास" },
+  bloodTestHistory: { en: "Blood Tests", hi: "रक्त परीक्षण" },
+  tokensEarned: { en: "Tokens Earned", hi: "कमाए गए टोकन" },
+  date: { en: "Date", hi: "तारीख" },
+  hospitalClinic: { en: "Hospital / Clinic", hi: "अस्पताल / क्लिनिक" },
+  status: { en: "Status", hi: "स्थिति" },
+  result: { en: "Result", hi: "नतीजा" },
+  noDonationHistory: { en: "No donation history found.", hi: "कोई रक्तदान इतिहास नहीं मिला।" },
+  noTestHistory: { en: "No blood test history found.", hi: "कोई रक्त परीक्षण इतिहास नहीं मिला।" },
 
   // ── Home Page ──
   homeTagline: {

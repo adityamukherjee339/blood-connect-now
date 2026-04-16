@@ -54,9 +54,9 @@ type EmergencyRequest = {
 };
 
 const STATUS_CONFIG = {
-  pending:  { label: "Pending",  icon: Clock,        color: "text-amber-500",   bg: "bg-amber-500/10",   border: "border-amber-500/20" },
+  pending: { label: "Pending", icon: Clock, color: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/20" },
   accepted: { label: "Accepted", icon: CheckCircle2, color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
-  rejected: { label: "Rejected", icon: XCircle,      color: "text-red-500",     bg: "bg-red-500/10",     border: "border-red-500/20" },
+  rejected: { label: "Rejected", icon: XCircle, color: "text-red-500", bg: "bg-red-500/10", border: "border-red-500/20" },
 };
 
 export default function HospitalDashboard() {
@@ -93,6 +93,10 @@ export default function HospitalDashboard() {
   const prevEmergencyCountRef = useRef(0);
   const [incomingPulse, setIncomingPulse] = useState(false);
   const [emergencyPulse, setEmergencyPulse] = useState(false);
+
+  // Keep a ref to session so the polling interval always has the latest value
+  const sessionRef = useRef<HospitalRecord | null>(null);
+  useEffect(() => { sessionRef.current = session; }, [session]);
 
   // ── Auth guard ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -136,21 +140,35 @@ export default function HospitalDashboard() {
     setLoadingIncoming(false);
   }, [session]);
 
-  const fetchEmergencies = useCallback(async () => {
+  const fetchEmergencies = useCallback(async (background = false) => {
     if (!session) return;
-    setLoadingEmergencies(true);
+    if (!background) setLoadingEmergencies(true);
     const { data } = await supabase
       .from("blood_requests")
       .select("id, name, phone, lat, lng, status, accepted_by_hospital_id, accepted_by_hospital_name, created_at")
       .eq("request_type", "ambulance")
       .order("created_at", { ascending: false });
     setEmergencies(data ?? []);
-    setLoadingEmergencies(false);
+    if (!background) setLoadingEmergencies(false);
   }, [session]);
 
   useEffect(() => { fetchPartners(); }, [fetchPartners]);
   useEffect(() => { fetchIncoming(); }, [fetchIncoming]);
-  useEffect(() => { fetchEmergencies(); }, [fetchEmergencies]);
+  useEffect(() => { fetchEmergencies(false); }, [fetchEmergencies]);
+
+  // ── Auto-refresh emergencies every 1 second (session via ref → no stale closure) ──
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (!sessionRef.current) return;
+      const { data } = await supabase
+        .from("blood_requests")
+        .select("id, name, phone, lat, lng, status, accepted_by_hospital_id, accepted_by_hospital_name, created_at")
+        .eq("request_type", "ambulance")
+        .order("created_at", { ascending: false });
+      setEmergencies(data ?? []);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []); // empty deps → created once, never re-created
 
   // ── Realtime subscriptions ─────────────────────────────────────────────────
   useEffect(() => {
@@ -165,7 +183,7 @@ export default function HospitalDashboard() {
     // Emergency ambulance requests
     const ch2 = supabase
       .channel("emergency-requests")
-      .on("postgres_changes", { event: "*", schema: "public", table: "blood_requests" }, () => fetchEmergencies())
+      .on("postgres_changes", { event: "*", schema: "public", table: "blood_requests" }, () => fetchEmergencies(true))
       .subscribe();
 
     return () => {
@@ -276,23 +294,21 @@ export default function HospitalDashboard() {
         {/* ── Tabs ──────────────────────────────────────────────────────────── */}
         <div className="mb-6 flex gap-1 rounded-xl bg-muted p-1">
           {[
-            { key: "partners",  label: t("partnerHospitals"), icon: ArrowRightLeft, badge: 0 },
-            { key: "incoming",  label: t("incomingRequests"),  icon: Inbox,          badge: pendingIncoming, pulse: incomingPulse },
-            { key: "emergency", label: t("emergencyAlerts"),   icon: Siren,          badge: pendingEmergencies, pulse: emergencyPulse, urgent: true },
+            { key: "partners", label: t("partnerHospitals"), icon: ArrowRightLeft, badge: 0 },
+            { key: "incoming", label: t("incomingRequests"), icon: Inbox, badge: pendingIncoming, pulse: incomingPulse },
+            { key: "emergency", label: t("emergencyAlerts"), icon: Siren, badge: pendingEmergencies, pulse: emergencyPulse, urgent: true },
           ].map(({ key, label, icon: Icon, badge, pulse, urgent }) => (
             <button
               key={key}
               onClick={() => setActiveTab(key as "partners" | "incoming" | "emergency")}
-              className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-medium transition-all ${
-                activeTab === key ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-              }`}
+              className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-medium transition-all ${activeTab === key ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
             >
               <Icon className={`h-4 w-4 ${urgent && badge > 0 ? "text-rose-500" : ""}`} />
               <span className="hidden sm:inline">{label}</span>
               {badge > 0 && (
-                <span className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-bold text-white transition-all ${
-                  urgent ? "bg-rose-500" : "bg-rose-500"
-                } ${pulse ? "scale-125 ring-2 ring-rose-400/60" : ""}`}>
+                <span className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-bold text-white transition-all ${urgent ? "bg-rose-500" : "bg-rose-500"
+                  } ${pulse ? "scale-125 ring-2 ring-rose-400/60" : ""}`}>
                   {badge}
                 </span>
               )}
@@ -452,11 +468,10 @@ export default function HospitalDashboard() {
                   return (
                     <div
                       key={em.id}
-                      className={`rounded-xl border p-5 shadow-sm transition-all ${
-                        isPending
-                          ? "border-rose-500/30 bg-rose-500/5 shadow-rose-500/10"
-                          : "border-border/60 bg-card"
-                      }`}
+                      className={`rounded-xl border p-5 shadow-sm transition-all ${isPending
+                        ? "border-rose-500/30 bg-rose-500/5 shadow-rose-500/10"
+                        : "border-border/60 bg-card"
+                        }`}
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         {/* Left — reporter info */}
@@ -472,11 +487,10 @@ export default function HospitalDashboard() {
                                 LIVE · Needs Ambulance
                               </span>
                             ) : (
-                              <span className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${
-                                acceptedByMe
-                                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600"
-                                  : "border-sky-500/30 bg-sky-500/10 text-sky-600"
-                              }`}>
+                              <span className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${acceptedByMe
+                                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600"
+                                : "border-sky-500/30 bg-sky-500/10 text-sky-600"
+                                }`}>
                                 <ShieldCheck className="h-3.5 w-3.5" />
                                 {acceptedByMe ? t("dispatchedByUs") : `${t("dispatchedByOther")} ${em.accepted_by_hospital_name ?? "another hospital"}`}
                               </span>
@@ -566,9 +580,8 @@ export default function HospitalDashboard() {
                     <div className="flex flex-wrap gap-2">
                       {BLOOD_GROUPS.map((bg) => (
                         <button key={bg} onClick={() => setNeeded(bg)}
-                          className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition-all ${
-                            needed === bg ? "bg-rose-500 text-white shadow-sm shadow-rose-500/30" : "bg-muted text-muted-foreground hover:bg-rose-500/10 hover:text-rose-600"
-                          }`}>{bg}</button>
+                          className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition-all ${needed === bg ? "bg-rose-500 text-white shadow-sm shadow-rose-500/30" : "bg-muted text-muted-foreground hover:bg-rose-500/10 hover:text-rose-600"
+                            }`}>{bg}</button>
                       ))}
                     </div>
                   </div>
@@ -578,9 +591,8 @@ export default function HospitalDashboard() {
                     <div className="flex flex-wrap gap-2">
                       {BLOOD_GROUPS.map((bg) => (
                         <button key={bg} onClick={() => setOffered(bg)}
-                          className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition-all ${
-                            offered === bg ? "bg-emerald-500 text-white shadow-sm shadow-emerald-500/30" : "bg-muted text-muted-foreground hover:bg-emerald-500/10 hover:text-emerald-600"
-                          }`}>{bg}</button>
+                          className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition-all ${offered === bg ? "bg-emerald-500 text-white shadow-sm shadow-emerald-500/30" : "bg-muted text-muted-foreground hover:bg-emerald-500/10 hover:text-emerald-600"
+                            }`}>{bg}</button>
                       ))}
                     </div>
                   </div>
