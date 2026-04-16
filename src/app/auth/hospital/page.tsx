@@ -15,6 +15,7 @@ export default function HospitalAuthPage() {
 
   // Form state
   const [hospitalName, setHospitalName] = useState("");
+  const [licenseNo, setLicenseNo] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -23,9 +24,10 @@ export default function HospitalAuthPage() {
     e.preventDefault();
     setError("");
 
-    if (mode === "signup") {
+      if (mode === "signup") {
       // Validation
       if (!hospitalName.trim()) return setError("Hospital name is required.");
+      if (!licenseNo.trim()) return setError("License number is required.");
       if (!email.trim()) return setError("Email is required.");
       if (password.length < 6) return setError("Password must be at least 6 characters.");
       if (password !== confirmPassword) return setError("Passwords do not match.");
@@ -45,7 +47,7 @@ export default function HospitalAuthPage() {
 
       const { data, error: insertError } = await supabase
         .from("hospitals")
-        .insert({ name: hospitalName.trim(), email: email.trim().toLowerCase(), password })
+        .insert({ name: hospitalName.trim(), license_no: licenseNo.trim(), email: email.trim().toLowerCase(), password })
         .select()
         .single();
 
@@ -133,16 +135,28 @@ export default function HospitalAuthPage() {
           {/* Form */}
           <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
             {mode === "signup" && (
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-foreground">Hospital Name</label>
-                <input
-                  type="text"
-                  value={hospitalName}
-                  onChange={(e) => setHospitalName(e.target.value)}
-                  placeholder="e.g. City General Hospital"
-                  className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-rose-500/50 transition-all"
-                />
-              </div>
+              <>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-foreground">Hospital Name</label>
+                  <input
+                    type="text"
+                    value={hospitalName}
+                    onChange={(e) => setHospitalName(e.target.value)}
+                    placeholder="e.g. City General Hospital"
+                    className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-rose-500/50 transition-all"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-foreground">License Number</label>
+                  <input
+                    type="text"
+                    value={licenseNo}
+                    onChange={(e) => setLicenseNo(e.target.value)}
+                    placeholder="e.g. LIC-12345"
+                    className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-rose-500/50 transition-all font-mono"
+                  />
+                </div>
+              </>
             )}
 
             <div className="flex flex-col gap-1.5">
